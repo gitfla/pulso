@@ -1,3 +1,3 @@
 # pulso
 
-Interactive heartbeat project.
+Interactive heartbeat project -- WIP.
