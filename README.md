@@ -1,1 +1,3 @@
 # pulso
+
+Interactive heartbeat project.
