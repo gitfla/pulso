@@ -43,9 +43,11 @@ byte rates[RATE_SIZE];            //Array of heart rates
 byte rateIndex = 0;
 
 int fingerTimeout = 2000;            // 2 second timeout for finger detection (2000 milli seconds)
+int irReportInterval = 500;          // send IR value every 500ms when finger is detected (IR > 50000)
 
 unsigned long lastBeat = 0;                //Time at which the last beat occurred
 unsigned long lastFingerDetected = 0;      //Time at which the last finger contact detected
+unsigned long lastIrReported = 0;
 
 State lastState = IDLE;
 
@@ -89,7 +91,6 @@ void reset() {
 
 void loop() {
   long irValue = particleSensor.getIR();
-  Serial.print("ir: " + String(irValue) + "\n");
 
   //ENDING CONDITIONAL time elapsed > 2000 milli seconds 
   if(lastState == READING){
@@ -109,12 +110,18 @@ void loop() {
 
   // finger detected, update state, if necessary
   lastFingerDetected = millis();
-  if(lastState == IDLE){
-      Serial.print("start");
-      Serial.print('\n');
-      lastState = READING;
-      isFirstBeat = true;
-    }
+  if(lastState == IDLE) {
+    Serial.print("start");
+    Serial.print('\n');
+    lastState = READING;
+    isFirstBeat = true;
+  }
+
+  if ((millis() - lastIrReported) > irReportInterval) {
+    Serial.print("ir_" + String(irValue));
+    Serial.print("\n");
+    lastIrReported = millis();
+  }
   
   // if beat not detected, return
   if (!checkForBeat(irValue)) {
