@@ -43,7 +43,7 @@ byte rates[RATE_SIZE];            //Array of heart rates
 byte rateIndex = 0;
 
 int fingerTimeout = 2000;            // 2 second timeout for finger detection (2000 milli seconds)
-int irReportInterval = 500;          // send IR value every 500ms when finger is detected (IR > 50000)
+int irReportInterval = 1000;          // send IR value every 500ms when finger is detected (IR > 50000)
 
 unsigned long lastBeat = 0;                //Time at which the last beat occurred
 unsigned long lastFingerDetected = 0;      //Time at which the last finger contact detected
@@ -82,10 +82,12 @@ void reset() {
   for (byte i = 0; i < RATE_SIZE; i++) {
     rates[i] = 0;
   }
+  isFirstBeat = true;
   beatCounter = 0;
   rateIndex = 0;
   lastFingerDetected = 0;
   lastBeat = 0;
+  lastIrReported = 0;
   lastState = IDLE;
 }
 
@@ -105,6 +107,8 @@ void loop() {
 
   // if finger not detected, return
   if (irValue < 50000) {
+    //Serial.print("ir < 50000, returning");
+    //Serial.print('\n');
     return;
   }
 
@@ -118,8 +122,10 @@ void loop() {
   }
 
   if ((millis() - lastIrReported) > irReportInterval) {
-    Serial.print("ir_" + String(irValue));
-    Serial.print("\n");
+    if (lastIrReported != 0) {
+      Serial.print("ir_" + String(irValue));
+      Serial.print("\n");
+    }
     lastIrReported = millis();
   }
   
@@ -134,20 +140,27 @@ void loop() {
 
   // ignore first reading as it's always way off
   if (isFirstBeat) {
+    Serial.print("first beat, ignoring");
+    Serial.print('\n');
     isFirstBeat = false;
     return;
   }
   
   beatsPerMinute = 60 / (delta / 1000.0);
-  // Serial.print("Single: " + String(beatsPerMinute) + "\n");
+  Serial.print("Single: " + String(beatsPerMinute) + "\n");
+  
 
   // ignore off readings
-  if (beatsPerMinute < 40 || beatsPerMinute > 200) {
+  if (beatsPerMinute < 30 || beatsPerMinute > 170) {
+    Serial.print("individual beat out of range, returning: " + String(beatsPerMinute));
+    Serial.print('\n');
     return;
   }
-  
+
   // valid reading
   beatCounter++;
+  //Serial.print(String(beatCounter));
+  //Serial.print('\n');
   rates[rateIndex++] = (byte)beatsPerMinute;       //Store this reading in the array
   rateIndex %= RATE_SIZE;                          //Wrap variable
 
