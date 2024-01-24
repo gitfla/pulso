@@ -23,7 +23,7 @@
   but it will also run at 3.3V.
 */
 
-//QUANDO MANDAR A MENSAGEM COM O BPM AVG ???
+#define BPM_RANGE_LIMITED
 
 #include <Wire.h>
 #include "MAX30105.h"
@@ -64,7 +64,7 @@ void setup() {
   while (!Serial); //wait for comm to stablish
 
   // Initialize sensor
-  if (!particleSensor.begin(Wire, I2C_SPEED_FAST)) { //Use default I2C port, 400kHz speed 
+  if (!particleSensor.begin(Wire, I2C_SPEED_STANDARD)) { //Use default I2C port, 400kHz speed 
     Serial.print("error");
     Serial.print('\n');
     while (1);
@@ -151,11 +151,13 @@ void loop() {
   
 
   // ignore off readings
-  if (beatsPerMinute < 30 || beatsPerMinute > 170) {
-    Serial.print("individual beat out of range, returning: " + String(beatsPerMinute));
-    Serial.print('\n');
-    return;
-  }
+  #ifdef BPM_RANGE_LIMITED
+    if (beatsPerMinute < 30 || beatsPerMinute > 170) {
+      Serial.print("individual beat out of range, returning: " + String(beatsPerMinute));
+      Serial.print('\n');
+      return;
+    }
+  #endif
 
   // valid reading
   beatCounter++;
